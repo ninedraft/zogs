@@ -2,34 +2,22 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const mem = std.mem;
 const testing = std.testing;
+const testutils = @import("./testing.zig");
 const fmt = std.fmt;
 
-const protocol_version: u8 = 5;
+pub const protocol_version: u8 = 5;
 
 const UnmarshalError = error{NotEnoughBytes};
 
 const Client = struct {
-    const AuthMethod = packed enum(u8) {
+    pub const AuthMethod = packed enum(u8) {
         NoAuth = 0x00,
         GSSAPI = 0x01,
         UsernamePassword = 0x02,
         NoMethods = 0xFF,
-
-        fn marshal(this: @This(), dst: []u8) usize {
-            dst[0] = @enumToInt(this);
-            return 1;
-        }
-
-        fn unmarshal(data: []const u8) !AuthMethod {
-            const n = 1;
-            if (data.len < n) {
-                return UnmarshalError.NotEnoughBytes;
-            }
-            return @intToEnum(AuthMethod, data[0]);
-        }
     };
 
-    const Hello = packed struct {
+    const Hello = struct {
         version: u8 = protocol_version,
         n_methods: u8,
         methods: []AuthMethod,
@@ -44,23 +32,6 @@ const Client = struct {
         dst_port: Port,
     };
 };
-
-test "auth method marshal/unmarshal" {
-    var buf: [1]u8 = undefined;
-    const test_cases = .{
-        .{ .am = Client.AuthMethod.NoAuth },
-        .{ .am = Client.AuthMethod.GSSAPI },
-        .{ .am = Client.AuthMethod.UsernamePassword },
-        .{ .am = Client.AuthMethod.NoMethods },
-    };
-
-    inline for (test_cases) |tc| {
-        const expected = tc.am;
-        const n = expected.marshal(&buf);
-        var got = try @TypeOf(expected).unmarshal(buf[0..n]);
-        testing.expect(got == expected);
-    }
-}
 
 const Server = struct {
     const AuthWith = packed struct {

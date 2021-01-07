@@ -1,5 +1,14 @@
 {
     "conventionalCommits.scopes": [
         "project"
+    ],
+
+    "filewatcher.commands": [
+        {
+            "match": "\\.zig",
+            "isAsync": true,
+            "cmd": "zig fmt ${file}",
+            "event": "onFileChange"
+        }        
     ]
 }
